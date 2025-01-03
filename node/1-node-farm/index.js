@@ -13,6 +13,22 @@ const templateProduct = fs.readFileSync(
   `${__dirname}/templates/product.html`,
   "utf-8"
 );
+
+const fillInProduct = (template, product) => {
+  let output = template;
+  output = output.replace(/{%PRODUCTNAME%}/g, product.productName);
+  output = output.replace(/{%IMAGE%}/g, product.image);
+  output = output.replace(/{%PRICE%}/g, product.price);
+  output = output.replace(/{%QUANTITY%}/g, product.quantity);
+  output = output.replace(/{%LOCATION%}/g, product.from);
+  output = output.replace(/{%NUTRIENTS%}/g, product.nutrients);
+  output = output.replace(/{%DESCRIPTION%}/g, product.description);
+  output = output.replace(
+    /{%NOTORGANIC%}/g,
+    product.organic ? "" : "not-organic"
+  );
+  return output;
+};
 const productJson = fs.readFileSync(`${__dirname}/dev-data/data.json`, "utf-8");
 const productData = JSON.parse(productJson);
 
@@ -24,9 +40,14 @@ const server = http.createServer((req, res) => {
     case "/":
     case "/overview":
       res.writeHead(200, { "content-type": "text/html" });
+      const cardsHTML = productData
+        .map((product) => {
+          return fillInProduct(templateCard, product);
+        })
+        .join("");
       const overviewHTML = templateOverview.replace(
         /{%PRODUCTCARDS%}/g,
-        templateCard
+        cardsHTML
       );
       res.end(overviewHTML);
       break;
