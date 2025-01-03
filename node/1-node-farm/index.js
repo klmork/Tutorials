@@ -36,9 +36,8 @@ const productData = JSON.parse(productJson);
 
 // Server + simple routing
 const server = http.createServer((req, res) => {
-  const parsedURL = url.parse(req.url, true);
-  const pathName = parsedURL.pathname;
-  switch (pathName) {
+  const { query, pathname } = url.parse(req.url, true);
+  switch (pathname) {
     case "/":
     case "/overview":
       res.writeHead(200, { "content-type": "text/html" });
@@ -54,7 +53,7 @@ const server = http.createServer((req, res) => {
       res.end(overviewHTML);
       break;
     case "/product":
-      const id = parsedURL.query?.id;
+      const id = query?.id;
       if (id && productData[id]) {
         res.writeHead(200, { "content-type": "text/html" });
         const productHMLT = fillInProduct(templateProduct, productData[id]);
