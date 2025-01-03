@@ -1,6 +1,9 @@
 const fs = require("fs");
 const http = require("http");
 
+const productJson = fs.readFileSync(`${__dirname}/dev-data/data.json`, "utf-8");
+const productData = JSON.parse(productJson);
+
 // Server + simple routing
 const server = http.createServer((req, res) => {
   const pathName = req.url;
@@ -12,6 +15,13 @@ const server = http.createServer((req, res) => {
       break;
     case "/product":
       res.end("this is the PRODUCT");
+      break;
+    case "/api":
+      console.log(productData);
+      res.writeHead(200, {
+        "Content-type": "application/json",
+      });
+      res.end(productJson);
       break;
     default:
       res.writeHead(404, {
