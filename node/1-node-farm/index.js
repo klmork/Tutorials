@@ -1,6 +1,18 @@
 const fs = require("fs");
 const http = require("http");
 
+const templateOverview = fs.readFileSync(
+  `${__dirname}/templates/template-overview.html`,
+  "utf-8"
+);
+const templateCard = fs.readFileSync(
+  `${__dirname}/templates/template-card.html`,
+  "utf-8"
+);
+const templateProduct = fs.readFileSync(
+  `${__dirname}/templates/product.html`,
+  "utf-8"
+);
 const productJson = fs.readFileSync(`${__dirname}/dev-data/data.json`, "utf-8");
 const productData = JSON.parse(productJson);
 
@@ -11,10 +23,16 @@ const server = http.createServer((req, res) => {
   switch (pathName) {
     case "/":
     case "/overview":
-      res.end("this is the OVERVIEW");
+      res.writeHead(200, { "content-type": "text/html" });
+      const overviewHTML = templateOverview.replace(
+        /{%PRODUCTCARDS%}/g,
+        templateCard
+      );
+      res.end(overviewHTML);
       break;
     case "/product":
-      res.end("this is the PRODUCT");
+      res.writeHead(200, { "content-type": "text/html" });
+      res.end(templateProduct);
       break;
     case "/api":
       console.log(productData);
