@@ -22,46 +22,41 @@ const productData = JSON.parse(productJson);
 // Server + simple routing
 const server = http.createServer((req, res) => {
   const { query, pathname } = url.parse(req.url, true);
-  switch (pathname) {
-    case "/":
-    case "/overview":
+  if (pathname === "/" || pathname === "/overview") {
+    res.writeHead(200, { "content-type": "text/html" });
+    const cardsHTML = productData
+      .map((product) => {
+        return fillInProduct(templateCard, product);
+      })
+      .join("");
+    const overviewHTML = templateOverview.replace(
+      /{%PRODUCTCARDS%}/g,
+      cardsHTML
+    );
+    res.end(overviewHTML);
+  } else if (pathname === "/product") {
+    const id = query?.id;
+    if (id && productData[id]) {
       res.writeHead(200, { "content-type": "text/html" });
-      const cardsHTML = productData
-        .map((product) => {
-          return fillInProduct(templateCard, product);
-        })
-        .join("");
-      const overviewHTML = templateOverview.replace(
-        /{%PRODUCTCARDS%}/g,
-        cardsHTML
-      );
-      res.end(overviewHTML);
-      break;
-    case "/product":
-      const id = query?.id;
-      if (id && productData[id]) {
-        res.writeHead(200, { "content-type": "text/html" });
-        const productHMLT = fillInProduct(templateProduct, productData[id]);
-        res.end(productHMLT);
-      } else {
-        res.writeHead(404, {
-          "Content-type": "text/html",
-        });
-        res.end("<h1>404: Product not found</h1>");
-      }
-      break;
-    case "/api":
-      console.log(productData);
-      res.writeHead(200, {
-        "Content-type": "application/json",
-      });
-      res.end(productJson);
-      break;
-    default:
+      const productHMLT = fillInProduct(templateProduct, productData[id]);
+      res.end(productHMLT);
+    } else {
       res.writeHead(404, {
         "Content-type": "text/html",
       });
-      res.end("<h1>404: Page not found</h1>");
+      res.end("<h1>404: Product not found</h1>");
+    }
+  } else if (pathname === "/api") {
+    console.log(productData);
+    res.writeHead(200, {
+      "Content-type": "application/json",
+    });
+    res.end(productJson);
+  } else {
+    res.writeHead(404, {
+      "Content-type": "text/html",
+    });
+    res.end("<h1>404: Page not found</h1>");
   }
 });
 
