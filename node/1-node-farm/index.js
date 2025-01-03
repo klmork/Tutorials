@@ -1,5 +1,6 @@
 const fs = require("fs");
 const http = require("http");
+const url = require("url");
 
 const templateOverview = fs.readFileSync(
   `${__dirname}/templates/template-overview.html`,
@@ -23,6 +24,7 @@ const fillInProduct = (template, product) => {
   output = output.replace(/{%LOCATION%}/g, product.from);
   output = output.replace(/{%NUTRIENTS%}/g, product.nutrients);
   output = output.replace(/{%DESCRIPTION%}/g, product.description);
+  output = output.replace(/{%ID%}/g, product.id);
   output = output.replace(
     /{%NOTORGANIC%}/g,
     product.organic ? "" : "not-organic"
@@ -34,8 +36,8 @@ const productData = JSON.parse(productJson);
 
 // Server + simple routing
 const server = http.createServer((req, res) => {
-  const pathName = req.url;
-  console.log("pathName: ", pathName);
+  const parsedURL = url.parse(req.url, true);
+  const pathName = parsedURL.pathname;
   switch (pathName) {
     case "/":
     case "/overview":
@@ -52,8 +54,17 @@ const server = http.createServer((req, res) => {
       res.end(overviewHTML);
       break;
     case "/product":
-      res.writeHead(200, { "content-type": "text/html" });
-      res.end(templateProduct);
+      const id = parsedURL.query?.id;
+      if (id && productData[id]) {
+        res.writeHead(200, { "content-type": "text/html" });
+        const productHMLT = fillInProduct(templateProduct, productData[id]);
+        res.end(productHMLT);
+      } else {
+        res.writeHead(404, {
+          "Content-type": "text/html",
+        });
+        res.end("<h1>404: Product not found</h1>");
+      }
       break;
     case "/api":
       console.log(productData);
