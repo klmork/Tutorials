@@ -1,6 +1,9 @@
 const fs = require("fs");
 const http = require("http");
 const url = require("url");
+
+const slugify = require("slugify");
+
 const fillInProduct = require("./modules/replaceTemplate");
 
 const templateOverview = fs.readFileSync(
@@ -19,9 +22,17 @@ const templateProduct = fs.readFileSync(
 const productJson = fs.readFileSync(`${__dirname}/dev-data/data.json`, "utf-8");
 const productData = JSON.parse(productJson);
 
+const slugs = new Map(
+  productData.map((product, index) => {
+    const slug = slugify(product.productName, { lower: true });
+    return [slug, index];
+  })
+);
 // Server + simple routing
 const server = http.createServer((req, res) => {
-  const { query, pathname } = url.parse(req.url, true);
+  const { pathname } = url.parse(req.url, true);
+  const productRegex = new RegExp("/product/([a-zA-Z-_]+)/?$");
+
   if (pathname === "/" || pathname === "/overview") {
     res.writeHead(200, { "content-type": "text/html" });
     const cardsHTML = productData
@@ -34,9 +45,10 @@ const server = http.createServer((req, res) => {
       cardsHTML
     );
     res.end(overviewHTML);
-  } else if (pathname === "/product") {
-    const id = query?.id;
-    if (id && productData[id]) {
+  } else if (productRegex.test(pathname)) {
+    const slug = productRegex.exec(pathname)[1];
+    const id = slugs.get(slug);
+    if (id !== undefined) {
       res.writeHead(200, { "content-type": "text/html" });
       const productHMLT = fillInProduct(templateProduct, productData[id]);
       res.end(productHMLT);
@@ -47,7 +59,6 @@ const server = http.createServer((req, res) => {
       res.end("<h1>404: Product not found</h1>");
     }
   } else if (pathname === "/api") {
-    console.log(productData);
     res.writeHead(200, {
       "Content-type": "application/json",
     });
